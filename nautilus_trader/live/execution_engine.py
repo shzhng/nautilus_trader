@@ -990,13 +990,25 @@ class LiveExecutionEngine(ExecutionEngine):
             missing_fills = await self._query_and_find_missing_fills(instrument_id, clients)
             await self._reconcile_missing_fills(missing_fills, instrument_id)
 
-            if not missing_fills and has_discrepancy:
-                self._log.warning(
-                    f"Position discrepancy for {instrument_id} persists but no missing fills found. "
-                    f"Possible causes: fills outside lookback window ({self.position_check_lookback_mins}min), "
-                    f"venue position error, or internal calculation error.",
-                    LogColor.YELLOW,
+            if not missing_fills:
+                # Re-check if discrepancy still exists after reconciliation
+                # (it may have been resolved by concurrent external fill processing)
+                current_cached_positions = self._cache.positions(
+                    venue=None,
+                    instrument_id=instrument_id,
                 )
+                still_has_discrepancy = self._check_position_discrepancy(
+                    list(current_cached_positions),
+                    venue_report,
+                    instrument_id,
+                )
+                if still_has_discrepancy:
+                    self._log.warning(
+                        f"Position discrepancy for {instrument_id} persists but no missing fills found. "
+                        f"Possible causes: fills outside lookback window ({self.position_check_lookback_mins}min), "
+                        f"venue position error, or internal calculation error.",
+                        LogColor.YELLOW,
+                    )
 
     def _check_position_discrepancy(
         self,
@@ -1099,12 +1111,24 @@ class LiveExecutionEngine(ExecutionEngine):
             await self._reconcile_missing_fills(missing_fills, instrument_id)
 
             if not missing_fills:
-                self._log.warning(
-                    f"Position discrepancy for {instrument_id} persists but no missing fills found. "
-                    f"Possible causes: fills outside lookback window ({self.position_check_lookback_mins}min), "
-                    f"venue position error, or internal calculation error.",
-                    LogColor.YELLOW,
+                # Re-check if discrepancy still exists after reconciliation
+                # (it may have been resolved by concurrent external fill processing)
+                current_cached_positions = self._cache.positions(
+                    venue=None,
+                    instrument_id=instrument_id,
                 )
+                still_has_discrepancy = self._check_position_discrepancy(
+                    list(current_cached_positions),
+                    venue_report,
+                    instrument_id,
+                )
+                if still_has_discrepancy:
+                    self._log.warning(
+                        f"Position discrepancy for {instrument_id} persists but no missing fills found. "
+                        f"Possible causes: fills outside lookback window ({self.position_check_lookback_mins}min), "
+                        f"venue position error, or internal calculation error.",
+                        LogColor.YELLOW,
+                    )
 
     async def _query_and_find_missing_fills(
         self,

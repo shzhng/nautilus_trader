@@ -270,21 +270,31 @@ class InteractiveBrokersClientOrderMixin(BaseMixin):
         order.order_state = order_state
         order.orderRef = order.orderRef.rsplit(":", 1)[0]
 
+        # Update order.orderId with the actual orderId from the callback.
+        # For orders placed in a previous session, IB returns orderId in the callback
+        # but the Order object may still have orderId=0. This ensures downstream
+        # code has access to the real orderId.
+        if order_id != 0 and order.orderId != order_id:
+            order.orderId = order_id
+
         # Handle response to on-demand request
         if request := self._requests.get(name="OpenOrders"):
             request.result.append(order)
 
             # Validate and add reverse mapping, if not exists
-            if order_ref := self._order_id_to_order_ref.get(order.orderId):
+            # Use permId as key for external orders (orderId=0) since permId is unique
+            # and persistent across sessions/clients
+            order_key = order.orderId if order.orderId != 0 else f"PERM-{order.permId}"
+            if order_ref := self._order_id_to_order_ref.get(order_key):
                 if not (
                     order_ref.account_id == order.account and order_ref.order_id == order.orderRef
                 ):
                     self._log.warning(
-                        f"Discrepancy found in order, expected {order_ref}, "
-                        f"was (account={order.account}, order_id={order.orderRef}",
+                        f"Discrepancy found in order (ib_order_id={order.orderId}, permId={order.permId}), "
+                        f"expected {order_ref}, was (account={order.account}, order_id={order.orderRef})",
                     )
             else:
-                self._order_id_to_order_ref[order.orderId] = AccountOrderRef(
+                self._order_id_to_order_ref[order_key] = AccountOrderRef(
                     account_id=order.account,
                     order_id=order.orderRef,
                 )
