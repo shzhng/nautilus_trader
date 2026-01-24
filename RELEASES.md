@@ -5,12 +5,12 @@ Released on TBD (UTC).
 ### Enhancements
 - Added sandbox execution adapter in Rust
 - Added multi-account execution support (#3194), thanks @faysou
+- Added tracing subscriber for external Rust library logs (`use_tracing=True` in `LoggingConfig`, filter with `RUST_LOG` env var)
 - Added `use_market_order_acks` venue config option to generate `OrderAccepted` events for market orders before filling (mimics behavior of venues like Binance)
 - Added `oto_trigger_mode` venue config option to control whether OTO child orders activate on partial fills (PARTIAL) or only after full fill (FULL) (default PARTIAL) (#3454), thanks @godnight10061
 - Improved tearsheet with dynamic Nautilus version and refined run info table (#3396), thanks @KaulSe
 
 ### Breaking Changes
-- Removed `init_tracing()` function from Python bindings (tracing crate removed from Rust codebase; `RUST_LOG` no longer has any effect)
 - Removed dead `subscribe_order_book_snapshots` and `unsubscribe_order_book_snapshots` methods from `LiveMarketDataClient` (were never called by the data engine)
 - Removed OKX URL environment variable overrides (`OKX_BASE_URL_HTTP`, `OKX_BASE_URL_WS_*`, `OKX_DEMO_BASE_URL_WS_*`); use config `base_url_*` fields instead
 - Removed deprecated `get_ws_base_url` function from OKX Rust adapter; use `get_ws_base_url_private` or `get_ws_base_url_public` instead
@@ -32,6 +32,7 @@ Released on TBD (UTC).
 - Fixed matching engine liquidity consumption using cumulative book quantity
 - Fixed matching engine liquidity consumption tracking for MAKER fills
 - Fixed matching engine trade execution fills discarded with `liquidity_consumption`
+- Fixed matching engine trade execution fill model and FOK/IOC handling
 - Fixed remaining `F_LAST` flag checks to use proper bitmask comparison
 - Fixed `MarketIfTouchedOrder` (MIT) filling at bar extremes instead of trigger price during backtesting (#3461, #3462), thanks @HaakonFlaaronning
 - Fixed OTO child order sizing with rapid parent fills (#3435), thanks for reporting @dxwil
@@ -51,6 +52,7 @@ Released on TBD (UTC).
 - Fixed `request_order_book_snapshot` and add Bybit support (#3416), thanks @dxwil
 - Fixed Redis cache buffer flushing during idle periods (#3426), thanks for reporting @santivazq
 - Fixed Betfair dropped fills from premature cache update
+- Fixed Betfair duplicate cancel event race condition
 - Fixed Binance Spot WebSocket subscription acknowledgment parsing (#3382), thanks @Johnkhk
 - Fixed Binance Futures instrument parsing for margin requirements (#3420), thanks @linimin
 - Fixed Binance algo order quantity `AttributeError` on _mem access
@@ -65,7 +67,9 @@ Released on TBD (UTC).
 - Fixed Interactive Brokers venue determination when primaryExchange is empty (#3452), thanks @shzhng
 - Fixed Interactive Brokers option symbol parsing to preserve OCC format with space padding (#3452), thanks @shzhng
 - Fixed Interactive Brokers minor bugs with options (#3452), thanks @shzhng
-- Fixed Interactive Brokers external order ID collision where orders placed via TWS/other clients (orderId=0) could cause fills to be attributed to wrong orders (#3465), thanks @shzhng
+- Fixed Interactive Brokers partial fill state transition errors where `openOrder` callbacks after fills caused invalid `PARTIALLY_FILLED` -> `ACCEPTED` transitions, thanks @shzhng
+- Fixed Interactive Brokers OrderStatusReport filled_qty always being 0 for open orders causing reconciliation errors, thanks @shzhng
+- Fixed Interactive Brokers position reconciliation double-counting partial fills from open orders (#3476), thanks @shzhng
 - Fixed Kraken spot instrument fee/margin parsing where parameters were incorrectly swapped
 - Fixed Polymarket order state race condition where `PLACEMENT` events could arrive late
 - Fixed Polymarket duplicate WebSocket subscriptions (#3403), thanks for reporting @santivazq
@@ -83,7 +87,7 @@ Released on TBD (UTC).
 - Added Deribit side-specific order cancellation (#3442), thanks @filipmacek
 - Added Deribit real-time portfolio WS subscription (#3444), thanks @filipmacek
 - Added Polymarket data loader rate limiting
-- Removed `tracing` crate from Rust codebase, migrated to `log` crate for simpler logging
+- Migrated Nautilus internal logging to `log` crate (external `tracing` available via `use_tracing` config)
 - Refactored computation of greeks (#3393), thanks @faysou
 - Refactored `TearsheetConfig.charts` to chart objects (removed `chart_args`) (#3398), thanks @KaulSe
 - Refactored Deribit WS client to use standard Nautilus method names (#3418), thanks @filipmacek
@@ -93,6 +97,7 @@ Released on TBD (UTC).
 - Improved checks before writing data in catalog._write_chunk (#3411), thanks @faysou
 - Improved `OptionExerciseModule` logging and fix cache reference (#3388), thanks @davidsblom
 - Improved execution reports builder pattern in Rust (#3417), thanks @filipmacek
+- Improved visualization to use fill report for create_bars_with_fills (#3466), thanks @faysou
 - Refined closing of streaming writer (#3394), thanks @faysou
 - Refined handling of `skip_first_non_full_bar` in `TimeBarAggregator` (#3395), thanks @faysou
 - Refined greeks safeguards and docs (#3407), thanks @faysou
