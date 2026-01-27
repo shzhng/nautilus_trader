@@ -1834,7 +1834,7 @@ async def test_missing_order_respects_retry_threshold(
 
 @pytest.mark.asyncio
 async def test_missing_order_skips_when_local_activity_recent(
-    exec_engine_open_check,
+    exec_engine_open_check_custom_threshold,
     exec_client,
     cache,
     account_id,
@@ -1843,7 +1843,7 @@ async def test_missing_order_skips_when_local_activity_recent(
     """
     Test that recent local activity defers the missing-order reconciliation path.
     """
-    exec_engine = exec_engine_open_check
+    exec_engine = exec_engine_open_check_custom_threshold
     order = TestExecStubs.limit_order(instrument=AUDUSD_SIM)
     cache.add_order(order)
 
@@ -1877,7 +1877,7 @@ async def test_missing_order_skips_when_local_activity_recent(
 
 @pytest.mark.asyncio
 async def test_recent_order_skipped_from_missing_check(
-    exec_engine,
+    exec_engine_open_check_custom_threshold,
     exec_client,
     cache,
     account_id,
@@ -1886,6 +1886,7 @@ async def test_recent_order_skipped_from_missing_check(
     """
     Test that very recently submitted orders are skipped from missing order checks.
     """
+    exec_engine = exec_engine_open_check_custom_threshold
     # Arrange
     order = TestExecStubs.limit_order(instrument=AUDUSD_SIM)
     cache.add_order(order)
