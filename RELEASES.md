@@ -3,6 +3,7 @@
 Released on TBD (UTC).
 
 ### Enhancements
+- Added `bulk_read_batch_size` option to `CacheConfig` for batched Redis bulk reads, thanks @shzhng
 - Added sandbox execution adapter in Rust
 - Added multi-account execution support (#3194), thanks @faysou
 - Added tracing subscriber for external Rust library logs (`use_tracing=True` in `LoggingConfig`, filter with `RUST_LOG` env var)
