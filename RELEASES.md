@@ -38,6 +38,7 @@ Released on TBD (UTC).
 - Fixed `MarketIfTouchedOrder` (MIT) filling at bar extremes instead of trigger price during backtesting (#3461, #3462), thanks @HaakonFlaaronning
 - Fixed OTO child order sizing with rapid parent fills (#3435), thanks for reporting @dxwil
 - Fixed IB options missing `^` prefix on index underlying symbols with simplified symbology
+- Fixed `GreeksCalculator` to use index price for index instruments
 - Fixed `ExecAlgorithm` spawn quantity accounting (will now restore quantity from denied/rejected spawned orders)
 - Fixed reconciliation `venue_order_id` indexing and validation
 - Fixed analyzer epoch timestamp from empty shell positions
