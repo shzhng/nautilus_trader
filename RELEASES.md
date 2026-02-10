@@ -10,6 +10,7 @@ Released on TBD (UTC).
 - Added `use_market_order_acks` venue config option to generate `OrderAccepted` events for market orders before filling (mimics behavior of venues like Binance)
 - Added `oto_trigger_mode` venue config option to control whether OTO child orders activate on partial fills (PARTIAL) or only after full fill (FULL) (default PARTIAL) (#3454), thanks @godnight10061
 - Improved tearsheet with dynamic Nautilus version and refined run info table (#3396), thanks @KaulSe
+- Added `TotalCashValue` to IB account summary `info` dict to expose actual cash balance (#3567), thanks @shzhng
 
 ### Breaking Changes
 - Removed dead `subscribe_order_book_snapshots` and `unsubscribe_order_book_snapshots` methods from `LiveMarketDataClient` (were never called by the data engine)
